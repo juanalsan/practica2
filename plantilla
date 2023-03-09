@@ -4,7 +4,7 @@ Solution to the one-way tunnel
 import time
 import random
 from multiprocessing import Lock, Condition, Process
-from multiprocessing import Value
+from multiprocessing import Value, Array
 
 SOUTH = 1
 NORTH = 0
@@ -19,29 +19,31 @@ TIME_IN_BRIDGE_PEDESTRGIAN = (30, 10) # normal 1s, 0.5s
 class Monitor():
     def __init__(self):
         self.mutex = Lock()
-        self.patata = Value('i', 0)
+        self.sem_personas =BoundedSemaphore
+        self.lcoche = [Array("i", 2)]
+        self.personas = Value('i', 0)
 
     def wants_enter_car(self, direction: int) -> None:
         self.mutex.acquire()
-        self.patata.value += 1
+        self.lcoche[direction]+= 1
         #### código
         self.mutex.release()
 
     def leaves_car(self, direction: int) -> None:
         self.mutex.acquire() 
-        self.patata.value += 1
+        self.lcoche[direction]-= 1
         #### código
         self.mutex.release()
 
     def wants_enter_pedestrian(self) -> None:
         self.mutex.acquire()
-        self.patata.value += 1
+        self.personas.value += 1
         #### código
         self.mutex.release()
 
     def leaves_pedestrian(self) -> None:
         self.mutex.acquire()
-        self.patata.value += 1
+        self.personas.value -= 1
         #### código
         self.mutex.release()
 
@@ -93,7 +95,7 @@ def gen_pedestrian(monitor: Monitor) -> None:
     for p in plst:
         p.join()
 
-def gen_cars(monitor) -> Monitor:
+def gen_cars(monitor: Monitor) -> None
     cid = 0
     plst = []
     for _ in range(NCARS):
