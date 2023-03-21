@@ -1,63 +1,125 @@
-"""
-Solution to the one-way tunnel
-"""
 import time
 import random
 from multiprocessing import Lock, Condition, Process
-from multiprocessing import Value, Array
+from multiprocessing import Value
+
+
+
+
 
 SOUTH = 1
 NORTH = 0
 
-NCARS = 100
-NPED = 10
-TIME_CARS = 0.5  # a new car enters each 0.5s
+NCARS = 15
+NPED = 5
+TIME_CARS_NORTH = 0.5  # a new car enters each 0.5s
+TIME_CARS_SOUTH = 0.5  # a new car enters each 0.5s
 TIME_PED = 5 # a new pedestrian enters each 5s
 TIME_IN_BRIDGE_CARS = (1, 0.5) # normal 1s, 0.5s
-TIME_IN_BRIDGE_PEDESTRGIAN = (30, 10) # normal 1s, 0.5s
+TIME_IN_BRIDGE_PEDESTRIAN = (30, 10) # normal 1s, 0.5s
 
 class Monitor():
     def __init__(self):
         self.mutex = Lock()
-        self.sem_personas =BoundedSemaphore
-        self.lcoche = [Array("i", 2)]
-        self.personas = Value('i', 0)
+        self.patata = Value('i', 0)
+        
+        
+        self.cN_waiting     = Value('i', 0)
+        self.cS_waiting     = Value('i', 0)
+        self.pers_waiting   = Value('i', 0)
+        
+        
+        self.ncoches_N         = Value('i', 0)
+        self.ncoches_S         = Value('i', 0)
+        self.npers             = Value('i', 0)
+        self.turno             = Value('i', 0)
+        
+       
+        self.no_coches    = Condition(self.mutex)
+        self.vacio        = Condition(self.mutex)
+        
+
+    
+
+
+    def puente_vacio(self):
+        return self.npers.value == 0 and \
+            (self.ncoches_S.value + self.ncoches_N.value == 0 ) and \
+            (self.pers_waiting.value == 0 or self.turno.value == 0 )
+             
 
     def wants_enter_car(self, direction: int) -> None:
         self.mutex.acquire()
-        self.lcoche[direction]+= 1
-        #### código
+        self.patata.value += 1
+        if direction == 1:
+            self.cS_waiting.value += 1
+        else:
+            self.cN_waiting.value += 1
+        
+      
+        self.vacio.wait_for(self.puente_vacio)
+        
+        if direction == 1:
+            self.cS_waiting.value -= 1
+            self.ncoches_S.value  += 1
+        else:
+            self.cN_waiting.value -= 1
+            self.ncoches_N.value  += 1
         self.mutex.release()
 
     def leaves_car(self, direction: int) -> None:
         self.mutex.acquire() 
-        self.lcoche[direction]-= 1
-        #### código
+        self.patata.value += 1
+          
+        if direction == 1:
+            self.ncoches_S.value -= 1
+        else:
+            self.ncoches_N.value -= 1
+        self.turno.value = 1 
+        self.vacio.notify_all()    
+        self.no_coches.notify_all()
+        
         self.mutex.release()
+        
+        
+            
+    def no_hay_coches(self):
+        return self.ncoches_S.value + self.ncoches_N.value  == 0 and \
+            (self.cS_waiting.value + self.cN_waiting.value == 0 or self.turno.value == 1)
 
     def wants_enter_pedestrian(self) -> None:
         self.mutex.acquire()
-        self.personas.value += 1
-        #### código
+        self.patata.value += 1
+        self.pers_waiting.value += 1
+
+        self.no_coches.wait_for(self.no_hay_coches)
+
+        self.pers_waiting.value -= 1
+        self.npers.value  += 1
         self.mutex.release()
+        
+
 
     def leaves_pedestrian(self) -> None:
         self.mutex.acquire()
-        self.personas.value -= 1
-        #### código
+        self.patata.value += 1
+        self.npers.value -= 1
+        self.turno.value = 0
+        if self.npers.value == 0:
+            self.vacio.notify_all()
         self.mutex.release()
 
     def __repr__(self) -> str:
         return f'Monitor: {self.patata.value}'
 
-def delay_car_north() -> None:
-    pass
+def delay_car_north() -> None:      #Tengo que poner la normal
+    time.sleep(random.normalvariate(1,0.5))
 
-def delay_car_south() -> None:
-    pass
+def delay_car_south() -> None:     #Tengo que poner la normal
+    time.sleep(random.normalvariate(1,0.5))
 
-def delay_pedestrian() -> None:
-    pass
+def delay_pedestrian() -> None:   #Tengo que poner la normal
+    time.sleep(random.normalvariate(30,10))
 
 def car(cid: int, direction: int, monitor: Monitor)  -> None:
     print(f"car {cid} heading {direction} wants to enter. {monitor}")
@@ -95,27 +157,29 @@ def gen_pedestrian(monitor: Monitor) -> None:
     for p in plst:
         p.join()
 
-def gen_cars(monitor: Monitor) -> None
+def gen_cars(direction: int, time_cars, monitor: Monitor) -> None:
     cid = 0
     plst = []
     for _ in range(NCARS):
-        direction = NORTH if random.randint(0,1)==1  else SOUTH
         cid += 1
         p = Process(target=car, args=(cid, direction, monitor))
         p.start()
         plst.append(p)
-        time.sleep(random.expovariate(1/TIME_CARS))
+        time.sleep(random.expovariate(1/time_cars))
 
     for p in plst:
         p.join()
 
 def main():
     monitor = Monitor()
-    gcars = Process(target=gen_cars, args=(monitor,))
+    gcars_north = Process(target=gen_cars, args=(NORTH, TIME_CARS_NORTH, monitor))
+    gcars_south = Process(target=gen_cars, args=(SOUTH, TIME_CARS_SOUTH, monitor))
     gped = Process(target=gen_pedestrian, args=(monitor,))
-    gcars.start()
+    gcars_north.start()
+    gcars_south.start()
     gped.start()
-    gcars.join()
+    gcars_north.join()
+    gcars_south.join()
     gped.join()
 
 
