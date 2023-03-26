@@ -87,7 +87,7 @@ class Monitor():
         
             
     def no_hay_coches(self):
-        return self.ncoches_S.value  and \
+        return self.ncoches_S.value==0  and \
             self.ncoches_N.value  == 0
            
 
