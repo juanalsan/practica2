@@ -89,7 +89,7 @@ class Monitor():
           
         if direction == 1:
             self.ncoches_S.value -= 1
-            self.turno.value = random.randint(0,2)
+            self.turno.value = random.choice([0,2])
             if self.ncoches_S.value == 0:
                 self.entra_coche_N.notify_all()
                 self.entra_pers.notify_all() 
@@ -139,7 +139,7 @@ class Monitor():
         self.mutex.release()
 
     def __repr__(self) -> str:
-        return f"iter:{self.patata.value},, coche_S:{self.ncoches_S.value},coche_N:{self.ncoches_N.value},  npers:{self.npers.value}>"
+        return f"iter:{self.patata.value},coche_S:{self.ncoches_S.value}, cS_wait:{self.cS_waiting.value},coche_N:{self.ncoches_N.value}, cN_wait:{self.cN_waiting.value}, npers:{self.npers.value}, pers_wait:{self.pers_waiting.value}>"
 
 def delay_car_north() -> None:      
     #time.sleep(random.normalvariate(1,0.5))
