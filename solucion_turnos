@@ -21,8 +21,11 @@ TIME_IN_BRIDGE_PEDESTRIAN = (30, 10) # normal 1s, 0.5s
 class Monitor():
     def __init__(self):
         self.mutex = Lock()
+        
         #Contador
         self.patata = Value('i', 0)
+        
+        
         
         #Número de coches y peatones esperando
         self.cN_waiting     = Value('i', 0)
@@ -37,6 +40,7 @@ class Monitor():
         # turno=0 => peatones; turno=1 => coche_S; turno=2 => coche_N
         self.turno             = Value('i', 0)
         
+        
         #Condiciones para entrar en el puente
         self.entra_pers       = Condition(self.mutex)
         self.entra_coche_S    = Condition(self.mutex)
@@ -45,17 +49,19 @@ class Monitor():
 
     
 
-        
-            
+
     def no_pers_S(self):
-        return self.npers.value == 0 and \
-            (self.ncoches_N.value == 0 ) and \
-            (self.cN_waiting.value + self.pers_waiting.value == 0 or self.turno.value == 1 )
+        return self.npers.value + self.ncoches_N.value == 0 and \
+            (self.cN_waiting.value + self.pers_waiting.value == 0 ) or \
+            (self.turno.value == 1 ) 
+            
             
     def no_pers_N(self):
-        return self.npers.value == 0 and \
-            (self.ncoches_S.value == 0 ) and \
-            (self.cS_waiting.value + self.pers_waiting.value == 0 or self.turno.value == 2 )
+        return self.npers.value + self.ncoches_S.value == 0 and \
+            (self.cS_waiting.value + self.pers_waiting.value == 0 ) or \
+            (self.turno.value == 2 ) 
+    
+    
             
              
 
@@ -95,9 +101,7 @@ class Monitor():
                 self.entra_pers.notify_all()    
                 self.entra_coche_S.notify_all()
                 self.entra_coche_N.notify_all()
-        
-        
-        
+
         self.mutex.release()
         
         
@@ -135,16 +139,19 @@ class Monitor():
         self.mutex.release()
 
     def __repr__(self) -> str:
-        return f"iter:patata, coche_S:{self.ncoches_S.value}, cS_wait:{self.cS_waiting.value},coche_N:{self.ncoches_N.value}, cN_wait:{self.cN_waiting.value}, npers:{self.npers.value}, pers_wait:{self.pers_waiting.value}>"
+        return f"iter:{self.patata.value},, coche_S:{self.ncoches_S.value},coche_N:{self.ncoches_N.value},  npers:{self.npers.value}>"
 
-def delay_car_north() -> None:      #Tengo que poner la normal
-    time.sleep(random.normalvariate(1,0.5))
+def delay_car_north() -> None:      
+    #time.sleep(random.normalvariate(1,0.5))
+    time.sleep(random.random()/3)
 
-def delay_car_south() -> None:     #Tengo que poner la normal
-    time.sleep(random.normalvariate(1,0.5))
+def delay_car_south() -> None:     
+    #time.sleep(random.normalvariate(1,0.5))
+    time.sleep(random.random()/3)
 
-def delay_pedestrian() -> None:   #Tengo que poner la normal
-    time.sleep(random.normalvariate(30,10))
+def delay_pedestrian() -> None:   
+    #time.sleep(random.normalvariate(30,10))
+    time.sleep(random.random()/2)
 
 def car(cid: int, direction: int, monitor: Monitor)  -> None:
     print(f"car {cid} heading {direction} wants to enter. {monitor}")
@@ -209,4 +216,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main
+    main()
