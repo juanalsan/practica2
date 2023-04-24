@@ -49,13 +49,15 @@ class Monitor():
 
     
 
-
+    #Devuelve true si no hay ni personas ni coches del norte dentro del puente y 
+    # si no hay ni coches del norte ni personas esperando o si es el turno de los coches del sur
     def no_pers_S(self):
         return self.npers.value + self.ncoches_N.value == 0 and \
             (self.cN_waiting.value + self.pers_waiting.value == 0 ) or \
             (self.turno.value == 1 ) 
             
-            
+    #Devuelve true si no hay ni personas ni coches del sur dentro del puente y 
+    # si no hay ni coches del sur ni personas esperando o si es el turno de los coches del sur       
     def no_pers_N(self):
         return self.npers.value + self.ncoches_S.value == 0 and \
             (self.cS_waiting.value + self.pers_waiting.value == 0 ) or \
@@ -106,7 +108,8 @@ class Monitor():
         
         
     
-            
+    #Devuelve true si no hay coches dentro del puente y 
+    # si no hay coches esperando o si es el turno de las personas        
     def no_hay_coches(self):
         return self.ncoches_S.value + self.ncoches_N.value  == 0 and \
             (self.cS_waiting.value + self.cN_waiting.value == 0 or self.turno.value == 0)
