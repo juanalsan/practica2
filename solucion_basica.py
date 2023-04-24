@@ -41,11 +41,12 @@ class Monitor():
 
     
 
-
+    #Devuelve true si no hay ni personas ni coches del sur dentro del puente
     def no_pers_N(self):
         return self.npers.value == 0 and \
             self.ncoches_S.value == 0
-            
+   
+    #Devuelve true si no hay ni personas ni coches del norte dentro del puente       
     def no_pers_S(self):
         return self.npers.value == 0 and \
             self.ncoches_N.value == 0
@@ -85,7 +86,7 @@ class Monitor():
         self.mutex.release()
         
         
-            
+    #Devuelve true si no hay coches dentro del puente       
     def no_hay_coches(self):
         return self.ncoches_S.value==0  and \
             self.ncoches_N.value  == 0
